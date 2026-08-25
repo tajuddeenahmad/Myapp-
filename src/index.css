@@ -109,3 +109,25 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.video-feed {
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.video-card {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}

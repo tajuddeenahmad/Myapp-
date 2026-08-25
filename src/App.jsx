@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './App.css'
-
+import Admin from './pages/Admin'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -26,7 +26,8 @@ function App() {
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/earnings" element={<Earnings />} />
         <Route path="/withdraw" element={<Withdraw />} />
-      </Routes>
+     <Route path="/admin" element={<Admin />} />
+ </Routes>
     </BrowserRouter>
   )
 }
