@@ -55,8 +55,14 @@ jobs:
             -PTAJVID_KEY_ALIAS="${{ secrets.TAJVID_KEY_ALIAS }}" \
             -PTAJVID_KEY_PASSWORD="${{ secrets.TAJVID_KEY_PASSWORD }}"
 
+      - name: Find signed APK
+        run: |
+          echo "===== APK FILES ====="
+          find android -type f -name "*.apk" -print
+
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
           name: TajVid-signed-release
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: android/**/build/outputs/**/*.apk
+          if-no-files-found: error
