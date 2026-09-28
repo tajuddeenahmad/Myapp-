@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# TajVid signing/build files
+android/tajvid-release.jks
+TajVid-release/
+
+# TajVid signing/build files
+android/tajvid-release.jks
+TajVid-release/

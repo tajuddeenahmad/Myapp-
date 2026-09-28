@@ -26,18 +26,33 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Restore Firebase config
+        run: |
+          printf '%s' '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+
       - name: Build web app
         run: npm run build
 
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Build release APK
-        working-directory: android
-        run: ./gradlew assembleRelease --no-daemon --max-workers=2
+      - name: Prepare release keystore
+        run: |
+          echo "${{ secrets.TAJVID_KEYSTORE_BASE64 }}" | base64 --decode > android/tajvid-release.jks
 
-      - name: Upload APK
+      - name: Build signed release APK
+        working-directory: android
+        run: |
+          ./gradlew assembleRelease \
+            --no-daemon \
+            --max-workers=2 \
+            -PTAJVID_STORE_FILE=tajvid-release.jks \
+            -PTAJVID_STORE_PASSWORD="${{ secrets.TAJVID_STORE_PASSWORD }}" \
+            -PTAJVID_KEY_ALIAS="${{ secrets.TAJVID_KEY_ALIAS }}" \
+            -PTAJVID_KEY_PASSWORD="${{ secrets.TAJVID_KEY_PASSWORD }}"
+
+      - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: TajVid-release
-          path: android/app/build/outputs/apk/release/*.apk
+          name: TajVid-signed-release
+          path: android/app/build/outputs/apk/release/app-release.apk
