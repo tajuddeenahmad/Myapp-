@@ -44,16 +44,22 @@ jobs:
         run: |
           sed -i '/aapt2/d' android/gradle.properties
 
+      - name: Configure release signing
+        working-directory: android
+        run: |
+          cat >> gradle.properties <<EOF
+          TAJVID_STORE_FILE=tajvid-release.jks
+          TAJVID_STORE_PASSWORD=${{ secrets.TAJVID_STORE_PASSWORD }}
+          TAJVID_KEY_ALIAS=${{ secrets.TAJVID_KEY_ALIAS }}
+          TAJVID_KEY_PASSWORD=${{ secrets.TAJVID_KEY_PASSWORD }}
+          EOF
+
       - name: Build signed release APK
         working-directory: android
         run: |
-          ./gradlew assembleRelease \
+          ./gradlew clean assembleRelease \
             --no-daemon \
-            --max-workers=2 \
-            -PTAJVID_STORE_FILE=tajvid-release.jks \
-            -PTAJVID_STORE_PASSWORD="${{ secrets.TAJVID_STORE_PASSWORD }}" \
-            -PTAJVID_KEY_ALIAS="${{ secrets.TAJVID_KEY_ALIAS }}" \
-            -PTAJVID_KEY_PASSWORD="${{ secrets.TAJVID_KEY_PASSWORD }}"
+            --max-workers=2
 
       - name: Find signed APK
         run: |
