@@ -30,3 +30,22 @@ TajVid-release/
 # TajVid signing/build files
 android/tajvid-release.jks
 TajVid-release/
+
+# Local secrets and generated files
+.env
+.env.*
+!.env.example
+android/app/google-services.json
+android/.kotlin/
+*.apk
+
+# Local backup files
+*.backup
+*.broken
+*.camera-backup
+*.before-data-saving
+*.notification
+*.permission
+*.register
+*.working
+*.camera-backup-download-share

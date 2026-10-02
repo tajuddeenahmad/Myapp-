@@ -3,43 +3,157 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // =========================================
     // POSTS
+    // =========================================
     match /posts/{postId} {
+
+      // Anyone can watch posts
       allow read: if true;
 
-      allow create: if request.auth != null;
+      // Logged-in users can create their own posts
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
 
-      allow update, delete: if request.auth != null
-        && request.auth.uid == resource.data.uid;
+      // Owner can edit/delete.
+      // Other logged-in users can update counters only.
+      allow update: if request.auth != null
+        && (
+          resource.data.uid == request.auth.uid
+          ||
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly([
+              'likes',
+              'views',
+              'comments'
+            ])
+        );
 
-      // COMMENTS
-      match /comments/{commentId} {
-        allow read: if true;
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
 
-        allow create: if request.auth != null;
+      // =========================================
+      // UNIQUE VIDEO VIEWS
+      // One view per logged-in user per video
+      // =========================================
+      match /views/{userId} {
 
-        allow update, delete: if request.auth != null
-          && request.auth.uid == resource.data.uid;
+        allow read: if request.auth != null
+          && request.auth.uid == userId;
+
+        allow create: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.postId == postId;
+
+        allow update, delete: if false;
       }
     }
 
-    // LIKES
-    match /likes/{likeId} {
+    // =========================================
+    // COMMENTS
+    // =========================================
+    // Comments are stored in top-level /comments
+    match /comments/{commentId} {
+
+      // Anyone can read comments
       allow read: if true;
 
-      allow create, delete: if request.auth != null
-        && request.auth.uid == request.resource.data.uid;
+      // Logged-in user can create their own comment
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.postId != null;
+
+      // User can edit/delete their own comment
+      allow update, delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
     }
 
-    // USERS
-    match /users/{userId} {
+
+    // =========================================
+    // LIKES
+    // =========================================
+    match /likes/{likeId} {
+
+      // Anyone can read likes
       allow read: if true;
 
-      allow create, update, delete: if request.auth != null
+      // Logged-in user can like a post
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.postId != null;
+
+      // User can remove their own like
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+
+      allow update: if false;
+    }
+
+
+    // =========================================
+    // FOLLOWS
+    // =========================================
+    match /follows/{followId} {
+
+      allow read: if true;
+
+      // User can follow another user
+      allow create: if request.auth != null
+        && request.resource.data.followerUid == request.auth.uid
+        && request.resource.data.followingUid != null
+        && request.resource.data.followingUid != request.auth.uid;
+
+      // User can unfollow
+      allow delete: if request.auth != null
+        && resource.data.followerUid == request.auth.uid;
+
+      // User can update their own follow document
+      allow update: if request.auth != null
+        && resource.data.followerUid == request.auth.uid
+        && request.resource.data.followerUid == request.auth.uid
+        && request.resource.data.followingUid != null
+        && request.resource.data.followingUid != request.auth.uid;
+
+    }
+
+
+    // =========================================
+    // USERS
+    // =========================================
+    match /users/{userId} {
+
+      allow read: if true;
+
+      // User can create their own profile
+      allow create: if request.auth != null
         && request.auth.uid == userId;
 
-      // WALLET TRANSACTIONS
+      // User can update their own profile.
+      // Counters can also be updated by authenticated users.
+      allow update: if request.auth != null
+        && (
+          request.auth.uid == userId
+          ||
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly([
+              'likes',
+'followers',
+'following',
+'totalViews',
+'fcmToken'
+   ])
+        );
+
+      allow delete: if request.auth != null
+        && request.auth.uid == userId;
+
+
+      // =========================================
+      // TRANSACTIONS
+      // =========================================
       match /transactions/{transactionId} {
+
         allow read: if request.auth != null
           && request.auth.uid == userId;
 
@@ -50,6 +164,46 @@ service cloud.firestore {
         allow update, delete: if request.auth != null
           && request.auth.uid == userId;
       }
+    }
+
+    // =========================================
+    // FCM TOKENS
+    // =========================================
+    match /fcmTokens/{userId} {
+
+      // User can save/update their own FCM token
+      allow read, create, update: if request.auth != null
+        && request.auth.uid == userId;
+
+      // User can delete their own token
+      allow delete: if request.auth != null
+        && request.auth.uid == userId;
+    }
+   
+ // =========================================
+    // WITHDRAWALS
+    // =========================================
+    match /withdrawals/{withdrawalId} {
+
+      allow read: if request.auth != null
+        && (
+          resource.data.uid == request.auth.uid
+          ||
+          resource.data.adminUid == request.auth.uid
+        );
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update: if request.auth != null
+        && (
+          resource.data.uid == request.auth.uid
+          ||
+          resource.data.adminUid == request.auth.uid
+        );
+
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
     }
   }
 }
